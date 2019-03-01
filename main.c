@@ -125,8 +125,6 @@ void phase_valid_test(unsigned int from, unsigned int to)
 
 	//phase_valid_ratio_test(16385); // fails!!!
 
-	return;
-
 	for (ratio = from; ratio < to; ratio++) {
 		phase_valid_ratio_test(ratio);
 	}
