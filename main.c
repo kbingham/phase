@@ -111,9 +111,6 @@ void phase_valid_ratio_test(unsigned int ratio)
 
 void phase_valid_test(unsigned int from, unsigned int to)
 {
-	//int ratio_from = 16384; // uds_compute_ratio(10, 205);
-	//int ratio_to = 65535 ; //uds_compute_ratio(1000, 20);
-
 	int ratio;
 
 	// phase_valid_ratio_test(16384); above this fails!!! rounding? integer precision?
@@ -125,11 +122,10 @@ void phase_valid_test(unsigned int from, unsigned int to)
 
 	//phase_valid_ratio_test(16385); // fails!!!
 
-	for (ratio = from; ratio < to; ratio++) {
+	for (ratio = from; ratio <= to; ratio++) {
 		phase_valid_ratio_test(ratio);
 	}
 }
-
 
 int main(int argc, char ** argv)
 {
@@ -139,11 +135,14 @@ int main(int argc, char ** argv)
 	//compute_phases();
 
 
-	/* Upscaling */
+	/* Upscaling     1/16, to almost 1/1 (4096/4095) */
 	phase_valid_test(0x100, 0xFFF); /*
 
-	/* Direct copy */
+	/* Direct copy - 1/1 */
 	phase_valid_test(4096, 4096);
+
+	/* Downscaling          */
+	phase_valid_test(4097, 65535);
 
 	return 0;
 }
