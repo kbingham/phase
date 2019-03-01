@@ -10,26 +10,28 @@ struct ratio {
 	unsigned int output;
 } ratios[] = {
 	/* Upscaling Ratio < 4096 */
+	{ 1000, 32000 }, /* Ratio =  127 1:32 */
+	{ 1000, 16000 }, /* Ratio =  255 1:16 */
+	{  100,  1000 }, /* Ratio =  405 1:10 */
+	{   10,    20 }, /* Ratio = 1940 on 1:2 */
+	{  100,   200 }, /* Ratio = 2037 on 1:2 */
+	{  200,   400 }, /* Ratio = 2042 on 1:2 ... leading towards 2048... */
+	{ 4096,  8192 }, /* Ratio = 2047... */
+	{ 8001, 16000 }, /* Ratio = 2048 */
+
+	/* Identity scaling 1:1 */
 	{    2,    2 },	/* Ratio = 4096 on 1:1 */
 	{  100,  100 },	/* Ratio = 4096 on 1:1 */
-	{   10,   20 }, /* Ratio = 1940 on 1:2 */
-	{  100,  200 }, /* Ratio = 2037 on 1:2 */
-	{  200,  400 }, /* Ratio = 2042 on 1:2 ... leading towards 2048... */
-	{ 4096, 8192 }, /* Ratio = 2047... */
-	{ 8001, 16000 }, /* Ratio = 2048 */
-	{  100, 1000 }, /* Ratio 405 1:10 */
-	{ 1000, 16 * 1000 }, /* Ratio 255 1:16 */
-	{ 1000, 32 * 1000 }, /* Ratio 127 1:32 */
 
 	/* Downscaling Ratio > 4096 */
+	{ 4096, 2048 }, /* Ratio 2:1  =  8194 (ideal world = 8192) ...? */
+	{ 1920,  720 }, /* Ratio      = 10932 */
 	{ 1000,  100 }, /* Ratio 10:1 = 41332 */
+
 	/* Small values are horribly inaccurate due to the input - 1 / output - 1 */
 	{   20,    2 }, /* Ratio 10:1 = 77824 - should be 40960 */
-	{ 4096, 2048 }, /* Ratio 2:1 = 8194 (ideal world = 8192) ...? */
-	{ 1920,  720 },
 	{ 4096,  256 }, /* 1/16 - our largest downscale */
 };
-
 
 /*
  * Iterate the ratios table above and perform various calculations,
@@ -49,7 +51,7 @@ void compute_ratios(void)
 				      rr < 0x800 ?  8 : /* 2 <  scale <= 4 */
 						    4;  /*      scale <= 2 */
 
-		printf(" In %u : Out %u : Ratio : %d (%u.%04u): Multiplier %d Margin %d\n",
+		printf("In %4u : Out %5u : Ratio : %5d (%2u.%04u): Multiplier %d Margin %2d\n",
 				r->input, r->output, rr, rr/4096, ((rr%4096)*10000/4096), uds_multiplier(rr), margin);
 	}
 }
