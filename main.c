@@ -133,16 +133,6 @@ void phase_valid_test(unsigned int from, unsigned int to)
 }
 
 
-int AMD_test(void)
-{
-	unsigned int ratio = uds_compute_ratio(1024, 1024);
-
-	printf("Ratio: %d\n", ratio);
-
-	return 0;
-}
-
-
 int main(int argc, char ** argv)
 {
 
@@ -150,15 +140,12 @@ int main(int argc, char ** argv)
 
 	//compute_phases();
 
-	//AMD_test();
 
 	/* Upscaling */
 	phase_valid_test(0x100, 0xFFF); /*
 
 	/* Direct copy */
 	phase_valid_test(4096, 4096);
-
-	printf("10 - 5 + 1 = %d\n", 10 - 5 + 1);
 
 	return 0;
 }
