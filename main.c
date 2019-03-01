@@ -137,14 +137,17 @@ int main(int argc, char ** argv)
 	//compute_phases();
 
 
-	/* Upscaling     1/16, to almost 1/1 (4096/4095) */
-	phase_valid_test(0x100, 0xFFF); /*
+	/* Upscaling     1/32, to almost 1/1 (4096/4095) */
+	phase_valid_test(0x7F, 0xFFF);
 
-	/* Direct copy - 1/1 */
-	phase_valid_test(4096, 4096);
+	/* Direct copy - 1/1 (4096 = 1.000 in 4.12) */
+	phase_valid_test(0x1000, 0x1000);
 
-	/* Downscaling          */
-	phase_valid_test(4097, 65535);
+	/* Downscaling - 1:1.1 up to 1:3.999 - Passes */
+	phase_valid_test(0x1001, 0x3FFF);
+
+	/* Downscaling beyond 4:1 (/4, /8, /16 /32 fail */
+	phase_valid_test(16383, 65535);
 
 	return 0;
 }
