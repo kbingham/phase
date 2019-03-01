@@ -15,7 +15,7 @@
  * m' as per Table 32.31.
  * This implementation assumes BLADV is always unset.
  */
-static unsigned int uds_multiplier(int ratio)
+static unsigned int uds_multiplier(unsigned int ratio)
 {
 	/* These must be adjusted if we ever set BLADV. */
 	unsigned int mp = ratio / 4096;
@@ -34,7 +34,7 @@ static unsigned int uds_multiplier(int ratio)
  *  	i.e. the left edge of the image.
  */
 
-static unsigned int uds_residual(int pos, int ratio)
+static unsigned int uds_residual(unsigned int pos, unsigned int ratio)
 {
 	unsigned int mp = uds_multiplier(ratio);
 	unsigned int residual = (pos * ratio) % (mp * 4096);
@@ -42,7 +42,7 @@ static unsigned int uds_residual(int pos, int ratio)
 	return residual;
 }
 
-static unsigned int uds_left_pixel(int pos, int ratio)
+static unsigned int uds_left_pixel(unsigned int pos, unsigned int ratio)
 {
 	unsigned int mp = uds_multiplier(ratio);
 	unsigned int prefilter_out = (pos * ratio) / (mp * 4096);
@@ -56,7 +56,7 @@ static unsigned int uds_left_pixel(int pos, int ratio)
 	return mp * (prefilter_out + (residual ? 1 : 0));
 }
 
-static unsigned int uds_right_pixel(int pos, int ratio)
+static unsigned int uds_right_pixel(unsigned int pos, unsigned int ratio)
 {
 	unsigned int mp = uds_multiplier(ratio);
 	unsigned int prefilter_out = (pos * ratio) / (mp * 4096);
@@ -64,7 +64,7 @@ static unsigned int uds_right_pixel(int pos, int ratio)
 	return mp * (prefilter_out + 2) + (mp / 2);
 }
 
-static unsigned int uds_start_phase(int pos, int ratio)
+static unsigned int uds_start_phase(unsigned int pos, unsigned int ratio)
 {
 	unsigned int mp = uds_multiplier(ratio);
 	unsigned int residual = (pos * ratio) % (mp * 4096);
@@ -72,7 +72,7 @@ static unsigned int uds_start_phase(int pos, int ratio)
 	return residual ? (4096 - residual / mp) : 0;
 }
 
-static unsigned int uds_phase_edge(int ratio)
+static unsigned int uds_phase_edge(unsigned int ratio)
 {
 	if (ratio < 4096) /* && UDS_CTRL.AMD */
 		return (4096 - ratio) / 2;
@@ -146,11 +146,11 @@ static unsigned int uds_output_size(unsigned int input, unsigned int ratio)
  * 'start_phase' as we use it should always be 0 I believe,
  * Therefore this could be removed once confirmed
  */
-static struct uds_phase uds_phase_calculation(int position, int start_phase,
-					      int ratio)
+static struct uds_phase uds_phase_calculation(unsigned int position, unsigned int start_phase,
+					      unsigned int ratio)
 {
 	struct uds_phase phase;
-	int alpha = ratio * position;
+	unsigned int alpha = ratio * position;
 
 	phase.edge = uds_phase_edge(ratio);
 
@@ -168,7 +168,8 @@ static struct uds_phase uds_phase_calculation(int position, int start_phase,
 	return phase;
 }
 
-static int uds_src_left_pixel(int dstpos, int start_phase, int ratio)
+static int uds_src_left_pixel(unsigned int dstpos, unsigned int start_phase,
+			      unsigned int ratio)
 {
 #if 0
 	/* Documentation extracts */
