@@ -29,10 +29,15 @@ static unsigned int uds_multiplier(int ratio)
  *   Shortened functions to do 'one' thing.
  */
 
+/*
+ *  These functions all assume a starting phase of 0.
+ *  	i.e. the left edge of the image.
+ */
+
 static unsigned int uds_residual(int pos, int ratio)
 {
 	unsigned int mp = uds_multiplier(ratio);
-	unsigned int residual = (pos * ratio * mp) % (mp * 4096);
+	unsigned int residual = (pos * ratio) % (mp * 4096);
 
 	return residual;
 }
@@ -40,15 +45,13 @@ static unsigned int uds_residual(int pos, int ratio)
 static unsigned int uds_left_pixel(int pos, int ratio)
 {
 	unsigned int mp = uds_multiplier(ratio);
-	unsigned int prefilter_out = (pos * ratio * mp) / (mp * 4096);
-	unsigned int residual = (pos * ratio * mp) % (mp * 4096);
-
-#define WARN_ON(n) printf("WARN_ON CAUGHT in uds_left_pixel\n")
+	unsigned int prefilter_out = (pos * ratio) / (mp * 4096);
+	unsigned int residual = (pos * ratio) % (mp * 4096);
 
 	if ((mp == 2 && (residual & 0x01)) ||
-	    (mp == 4 && (residual & 0x03)))
-		WARN_ON(1);
-#undef WARN_ON
+	    (mp == 4 && (residual & 0x03))) {
+		printf("WARN_ON CAUGHT in uds_left_pixel\n");
+	}
 
 	return mp * (prefilter_out + (residual ? 1 : 0));
 }
@@ -56,7 +59,7 @@ static unsigned int uds_left_pixel(int pos, int ratio)
 static unsigned int uds_right_pixel(int pos, int ratio)
 {
 	unsigned int mp = uds_multiplier(ratio);
-	unsigned int prefilter_out = (pos * ratio * mp) / (mp * 4096);
+	unsigned int prefilter_out = (pos * ratio) / (mp * 4096);
 
 	return mp * (prefilter_out + 2) + (mp / 2);
 }
@@ -64,7 +67,7 @@ static unsigned int uds_right_pixel(int pos, int ratio)
 static unsigned int uds_start_phase(int pos, int ratio)
 {
 	unsigned int mp = uds_multiplier(ratio);
-	unsigned int residual = (pos * ratio * mp) % (mp * 4096);
+	unsigned int residual = (pos * ratio) % (mp * 4096);
 
 	return residual ? (4096 - residual / mp) : 0;
 }
