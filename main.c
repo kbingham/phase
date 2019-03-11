@@ -81,26 +81,44 @@ void compute_phases(void)
 
 void phase_valid_ratio_test(unsigned int ratio)
 {
-	int pos;
+	//printf("Ratio : %d (%u.%04u)\n", ratio, ratio/4096, ((ratio%4096)*10000/4096));
 
-	/* ratio 16384 is breaking here (4.00) */
+	for (unsigned int i = 0; i < 4096; i++) {
+		unsigned int mp = uds_multiplier(ratio);
 
-	printf("Ratio : %d (%u.%04u)\n", ratio, ratio/4096, ((ratio%4096)*10000/4096));
+		unsigned int pullback = uds_residual_offset(i, ratio);
+		unsigned int pos = i - pullback;
 
-	for (pos = 0; pos < 4096; pos++) {
 		unsigned int start_phase = uds_start_phase(pos, ratio);
 		unsigned int left = uds_left_pixel(pos, ratio);
 		unsigned int right = uds_right_pixel(pos, ratio);
 		unsigned int residual = uds_residual(pos, ratio);
 
+#if 0
+		if (uds_pullback_required(i, ratio) && mp == 4)
+		{
+			printf("Checking offsets: i=%d, pullback =%d pos = %d \n",
+					i, pullback, pos);
+
+		}
+#endif
+
+		if (uds_pullback_required(pos, ratio)) {
+			printf("Pulled back pos still wants pullback?:ratio %d i=%d, pullback =%d pos = %d \n",
+					ratio, i, pullback, pos);
+		}
+
+
 		struct uds_phase phase = uds_phase_calculation(pos, 0, ratio);
 
-		//if (start_phase != phase.start);
-		if (left != phase.left) {
-			unsigned int newleft = uds_src_left_pixel(pos, 0, ratio);
+		unsigned int phaseleft = uds_src_left_pixel(pos, 0, ratio);
+
+		if ((left != phase.left) || (left != phaseleft)) {
+			printf("pos %4d, left %5d, phase.left %5d phaseleft %5d\n",
+					pos, left, phase.left, phaseleft);
+
 			printf("residual = %d, phase.residual = %d\n", residual, phase.residual);
-			printf("newleft = %d\n", newleft);
-			printf("pos %d, left %d, phase.left %d\n", pos, left, phase.left);
+
 			return;
 		}
 
@@ -115,18 +133,38 @@ void phase_valid_test(unsigned int from, unsigned int to)
 {
 	int ratio;
 
-	// phase_valid_ratio_test(16384); above this fails!!! rounding? integer precision?
-
-	/*
-	 * Failures start as soon as I get mp=2 or mp=4
-	 * So it's a precision thing somewhere.
-	 */
-
-	//phase_valid_ratio_test(16385); // fails!!!
-
 	for (ratio = from; ratio <= to; ratio++) {
 		phase_valid_ratio_test(ratio);
 	}
+}
+
+static unsigned int uds_residual_correct(int pos, int ratio)
+{
+	unsigned int mp = uds_multiplier(ratio);
+	unsigned int residual = (pos * ratio) % (mp * 4096);
+
+	return residual;
+}
+
+int residual_test()
+{
+	unsigned int ratio;
+
+	for (ratio = 16383; ratio <= 65535; ratio++) {
+		for (int pos = 0; pos < 4096; pos++) {
+			unsigned int residuala = uds_residual(pos, ratio);
+			unsigned int residualb = uds_residual_correct(pos, ratio);
+
+			if (residuala != residualb) {
+				printf("Ratio:%5d (%u.%04u):", ratio, ratio/4096, ((ratio%4096)*10000/4096));
+				printf("pos %4d uds_residual %5d : 'correct' %5d : diff %6d\n", pos,
+					residuala, residualb, residuala - residualb);
+				return -1;
+			}
+		}
+	}
+
+	return 0;
 }
 
 int main(int argc, char ** argv)
@@ -136,18 +174,22 @@ int main(int argc, char ** argv)
 
 	//compute_phases();
 
+	// now verified // residual_test();
 
 	/* Upscaling     1/32, to almost 1/1 (4096/4095) */
-	phase_valid_test(0x7F, 0xFFF);
+	// phase_valid_test(0x7F, 0xFFF);
 
 	/* Direct copy - 1/1 (4096 = 1.000 in 4.12) */
-	phase_valid_test(0x1000, 0x1000);
+	// phase_valid_test(0x1000, 0x1000);
 
 	/* Downscaling - 1:1.1 up to 1:3.999 - Passes */
-	phase_valid_test(0x1001, 0x3FFF);
+	// phase_valid_test(0x1001, 0x3FFF);
 
 	/* Downscaling beyond 4:1 (/4, /8, /16 /32 fail */
-	phase_valid_test(16383, 65535);
+	phase_valid_test(16383, 18000);
+
+	phase_valid_test(32768, 65535);
+
 
 	return 0;
 }

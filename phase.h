@@ -12,10 +12,12 @@
 /************************************************************************************/
 
 /* My new helper */
-static unsigned int uds_multiplier(int ratio);
+static unsigned int uds_multiplier(unsigned int ratio);
 
 /* Phase calculations destined for the UDS as necessary */
-static unsigned int uds_residual(int pos, int ratio);
+static unsigned int uds_residual(unsigned int pos, unsigned int ratio);
+static unsigned int uds_residual_offset(unsigned int pos, unsigned int ratio);
+static unsigned int uds_pullback_required(unsigned int pos, unsigned int ratio);
 static unsigned int uds_left_pixel(unsigned int pos, unsigned int ratio);
 static unsigned int uds_right_pixel(unsigned int pos, unsigned int ratio);
 static unsigned int uds_start_phase(unsigned int pos, unsigned int ratio);

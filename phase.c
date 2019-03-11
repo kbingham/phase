@@ -4,6 +4,72 @@
 #include "phase.h"
 
 
+static unsigned int uds_residual_incorrect(int pos, int ratio)
+{
+	unsigned int mp = uds_multiplier(ratio);
+	/* Note the incorrect multiplication by mp.
+	 * This should only occur if the start phase is adjusted
+	 */
+	unsigned int residual = (pos * ratio * mp) % (mp * 4096);
+
+	return residual;
+}
+
+
+/*
+ * Satisfy UDS residual offset restriction
+ *
+ * The first destination pixel of any partition window must be aligned
+ * to an integer multiple of the prefilter multiplier.
+ *
+ * To ensure this is the case we calculate a 'pull-back' offset to subtract
+ * from any pixel to assert this.
+ */
+static unsigned int uds_residual_offset(unsigned int pos, unsigned int ratio)
+{
+	unsigned int mp = uds_multiplier(ratio);
+
+	if (mp == 1) return 0;
+
+	unsigned int n = pos * ratio / mp;
+	unsigned int a = mp * n / ratio;
+
+	//return a;
+
+	return pos - a;
+
+	return (pos * ratio) % mp;
+}
+
+static unsigned int uds_pullback_required(unsigned int pos, unsigned int ratio)
+{
+	int offset =  uds_residual_offset(pos, ratio);
+	unsigned int mp = uds_multiplier(ratio);
+	unsigned int residual = (pos * ratio) % (mp * 4096);
+
+	int check = ((mp == 2 && (residual & 0x01)) || (mp == 4 && (residual & 0x03)));
+
+	if ((!!check) != (!!offset)) {
+		printf("*******uds_residual_offset (%d) and residual check %d disagree...\n", offset, check);
+	}
+
+	if (check || offset) {
+		unsigned int n = pos * ratio / mp;
+		unsigned int a = mp * n / ratio;
+
+		unsigned int pullback = pos - a;
+
+		printf("Pos: %u Ratio %u MP %u : n %u  a %u  pullback %u\n",
+				pos, ratio, mp, n, a, pullback);
+	}
+
+
+	return check || offset;
+}
+
+
+
+
 /******************************************************************************
  *
  *   Prefilter multipler helper
@@ -197,6 +263,8 @@ restriction can be expressed as below in other word.
 	struct uds_phase phase;
 
 	phase = uds_phase_calculation(dstpos, start_phase, ratio);
+
+	unsigned int pullback = uds_residual_offset(dstpos, ratio);
 
 	/* Renesas guard against odd values in these scale ratios here ? */
 	if ((phase.mp == 2 && (phase.residual & 0x01)) ||
