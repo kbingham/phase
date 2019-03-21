@@ -133,6 +133,11 @@ void phase_valid_test(unsigned int from, unsigned int to)
 {
 	int ratio;
 
+	
+	printf("Test from : %d (%u.%04u) [0x%04x] to %d (%u.%04u) [0x%04x]\n",
+		from, from/4096, ((from%4096)*10000/4096), from,
+		to, to/4096, ((to%4096)*10000/4096), to);
+
 	for (ratio = from; ratio <= to; ratio++) {
 		phase_valid_ratio_test(ratio);
 	}
@@ -167,29 +172,57 @@ int residual_test()
 	return 0;
 }
 
+
+/* Can't use '1' in the ratios so double both components */
+#define RATIO(a, b) uds_compute_ratio_naive(a * 10, b * 10)
+#define RATIO_UDS(a, b) uds_compute_ratio(a * 10, b * 10)
+
 int main(int argc, char ** argv)
 {
 
 	compute_ratios();
+//	compute_phases();
 
-	//compute_phases();
+#ifdef FULLTESTRANGE
 
 	// now verified // residual_test();
 
-	/* Upscaling     1/32, to almost 1/1 (4096/4095) */
-	// phase_valid_test(0x7F, 0xFFF);
+	/* Upscaling     1:32, to 1:1.0002 (4096/4095) */
+	phase_valid_test(0x7F, 0xFFF);
 
-	/* Direct copy - 1/1 (4096 = 1.000 in 4.12) */
-	// phase_valid_test(0x1000, 0x1000);
+	/* Direct copy - 1:1 (4096 = 1.000 in 4.12) */
+	phase_valid_test(0x1000, 0x1000);
 
 	/* Downscaling - 1:1.1 up to 1:3.999 - Passes */
-	// phase_valid_test(0x1001, 0x3FFF);
+	phase_valid_test(0x1001, 0x3FFF);
 
 	/* Downscaling beyond 4:1 (/4, /8, /16 /32 fail */
 	phase_valid_test(16383, 18000);
 
 	phase_valid_test(32768, 65535);
 
+#else // Limited test ranges
+	phase_valid_test(0x7F, 0xFF);
+	phase_valid_test(RATIO(1, 32), RATIO(1, 30));
+
+	/* Test around 1:1 */
+	phase_valid_test(RATIO(1000, 1010), RATIO(1010, 1000));
+
+	/* Downscaling - 3.5:1 up to 3.999:1 - Passes */
+	phase_valid_test(RATIO(3500, 1000), RATIO(3999, 1000));
+
+	/* ~ 4:1 */
+	phase_valid_test(RATIO(3999, 1000), RATIO(4500, 1000));
+
+	/* ~ 8:1 */
+	phase_valid_test(RATIO(7800, 1000), RATIO(8200, 1000));
+
+	/* ~ 16:1 */
+	phase_valid_test(RATIO(15800, 1000), RATIO(16200, 1000));
+
+	/* ~ 32:1 */
+	phase_valid_test(RATIO(31800, 1000), RATIO(32000, 1000));
+#endif
 
 	return 0;
 }
