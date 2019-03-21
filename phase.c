@@ -4,6 +4,8 @@
 #include "phase.h"
 
 
+static unsigned int failures = 0;
+
 static unsigned int uds_residual_incorrect(int pos, int ratio)
 {
 	unsigned int mp = uds_multiplier(ratio);
@@ -117,6 +119,10 @@ static unsigned int uds_left_pixel(unsigned int pos, unsigned int ratio)
 	if ((mp == 2 && (residual & 0x01)) ||
 	    (mp == 4 && (residual & 0x03))) {
 		printf("WARN_ON CAUGHT in uds_left_pixel\n");
+		if (failures++ > 10) {
+			printf("Exiting after too many warnings\n");
+			abort();
+		}
 	}
 
 	return mp * (prefilter_out + (residual ? 1 : 0));
@@ -273,6 +279,9 @@ restriction can be expressed as below in other word.
 		printf("P:%3u ratio %d mp:%u pt %u outpos %u residual %u edge %u src_left %u src_right %u\n",
 			dstpos, ratio, phase.mp, phase.prefilt_term, phase.prefilt_outpos, phase.residual, phase.edge,
 			phase.left, phase.right);
+
+		if (failures++ > 10)
+			abort();
 	}
 
 	return phase.mp * (phase.prefilt_outpos + (phase.residual ? 1 : 0));
